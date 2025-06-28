@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Interactive Guide: SVG Thumbnail Provider Installation</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+			rel="stylesheet"
+		/>
+		<!-- Chosen Palette: Warm Neutrals -->
+		<!-- Application Structure Plan: A single-page, task-oriented guide that walks the user through the installation process step-by-step. The structure is Header -> Intro -> Prerequisites (Checklist) -> Installation Steps (Numbered sections with copyable commands) -> Verification -> Uninstall (Collapsible). This linear flow is the most intuitive for a technical installation process, minimizing confusion. Interactive elements like checklists and copy buttons are used to reduce user effort and prevent common errors like typos, making the process smoother and more reliable than reading static documentation. -->
+		<!-- Visualization & Content Choices: Report Info: Installation steps and commands. -> Goal: Guide the user through a technical process. -> Viz/Presentation Method: Numbered sections with styled code blocks and instructional text. -> Interaction: Copy-to-clipboard buttons for all commands; interactive checklist for prerequisites. -> Justification: This approach transforms a passive document into an active tool. Checklists confirm readiness, and copy buttons eliminate typing errors, directly addressing the main friction points of a manual command-line installation. The structure is task-oriented, which is superior for usability compared to a simple text document. -> Library/Method: Vanilla JS for interactions, Tailwind CSS for layout and styling. -->
+		<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+		<style>
+			body {
+				font-family: "Inter", sans-serif;
+				background-color: #fdfcfb;
+				color: #3f3f46;
+			}
+			.step-card {
+				background-color: #ffffff;
+				border: 1px solid #f3f4f6;
+				transition: transform 0.2s ease-in-out,
+					box-shadow 0.2s ease-in-out;
+			}
+			.step-card:hover {
+				transform: translateY(-4px);
+				box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07),
+					0 4px 6px -4px rgb(0 0 0 / 0.07);
+			}
+			.command-block {
+				background-color: #f3f4f6;
+				color: #1f2937;
+				font-family: monospace;
+				word-break: break-all;
+			}
+			.copy-btn {
+				background-color: #e5e7eb;
+				color: #4b5563;
+				transition: background-color 0.2s;
+			}
+			.copy-btn:hover {
+				background-color: #d1d5db;
+			}
+			.copy-btn.copied {
+				background-color: #16a34a;
+				color: white;
+			}
+			.prereq-item input:checked + label span:first-child {
+				background-color: #fb923c;
+				border-color: #fb923c;
+			}
+			.prereq-item input:checked + label span:first-child svg {
+				display: block;
+			}
+			.prereq-item input:checked + label span:last-child {
+				text-decoration: line-through;
+				color: #9ca3af;
+			}
+			.step-number {
+				background-color: #fed7aa;
+				color: #c2410c;
+			}
+		</style>
+	</head>
+	<body class="antialiased">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+			<header class="text-center mb-12">
+				<h1
+					class="text-4xl sm:text-5xl font-bold text-gray-800 tracking-tight"
+				>
+					Native SVG Thumbnail Provider
+				</h1>
+				<p class="mt-4 text-lg text-gray-600">
+					An interactive guide to enabling SVG thumbnails in Windows
+					File Explorer.
+				</p>
+			</header>
+
+			<main class="space-y-12">
+				<!-- Introduction -->
+				<section>
+					<div
+						class="bg-orange-50 border-l-4 border-orange-400 p-6 rounded-r-lg"
+					>
+						<div class="flex">
+							<div class="flex-shrink-0">
+								<svg
+									class="h-6 w-6 text-orange-400"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
+								</svg>
+							</div>
+							<div class="ml-4">
+								<h3 class="text-lg font-medium text-orange-800">
+									Welcome!
+								</h3>
+								<p class="mt-2 text-md text-orange-700">
+									This application guides you through
+									compiling and installing a native Windows
+									Shell extension to render SVG file
+									thumbnails. It uses only official Rust and
+									Windows APIs for a lightweight,
+									dependency-free solution. Follow the steps
+									below to get started.
+								</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Prerequisites -->
+				<section id="prerequisites">
+					<h2
+						class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3"
+					>
+						1. Prerequisites Checklist
+					</h2>
+					<div
+						class="bg-white p-6 rounded-lg border border-gray-200 space-y-4"
+					>
+						<p class="text-gray-600">
+							Before you begin, please ensure you have the
+							following tools installed on your system. Check them
+							off as you confirm.
+						</p>
+						<div class="prereq-item">
+							<input type="checkbox" id="rust" class="hidden" />
+							<label
+								for="rust"
+								class="flex items-center cursor-pointer"
+							>
+								<span
+									class="w-6 h-6 mr-4 flex items-center justify-center border-2 border-gray-300 rounded-md transition-all duration-200"
+								>
+									<svg
+										class="w-4 h-4 text-white hidden"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="3"
+											d="M5 13l4 4L19 7"
+										></path>
+									</svg>
+								</span>
+								<span class="text-gray-700 font-medium"
+									>Rust Toolchain</span
+								>
+							</label>
+						</div>
+						<div class="prereq-item">
+							<input type="checkbox" id="msvc" class="hidden" />
+							<label
+								for="msvc"
+								class="flex items-center cursor-pointer"
+							>
+								<span
+									class="w-6 h-6 mr-4 flex items-center justify-center border-2 border-gray-300 rounded-md transition-all duration-200"
+								>
+									<svg
+										class="w-4 h-4 text-white hidden"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="3"
+											d="M5 13l4 4L19 7"
+										></path>
+									</svg>
+								</span>
+								<span class="text-gray-700 font-medium"
+									>MSVC C++ build tools (for the
+									`x86_64-pc-windows-msvc` target)</span
+								>
+							</label>
+						</div>
+					</div>
+				</section>
+
+				<!-- Installation Steps -->
+				<section id="installation">
+					<h2
+						class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3"
+					>
+						2. Installation Process
+					</h2>
+					<div class="space-y-8">
+						<!-- Step 1: Build -->
+						<div class="step-card p-6 rounded-lg shadow-sm">
+							<div class="flex items-start">
+								<div
+									class="step-number flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
+								>
+									1
+								</div>
+								<div class="ml-5 flex-1">
+									<h3
+										class="text-xl font-semibold text-gray-800"
+									>
+										Build the DLL
+									</h3>
+									<p class="mt-2 text-gray-600">
+										Navigate to the project's root directory
+										in your terminal. Then, run the
+										following command to compile the code
+										into a release-ready DLL.
+									</p>
+									<div class="mt-4">
+										<div
+											class="command-block p-4 rounded-md flex items-center justify-between"
+										>
+											<pre><code id="build-cmd">cargo build --release --target=x86_64-pc-windows-msvc</code></pre>
+											<button
+												class="copy-btn ml-4 px-3 py-1 text-sm font-medium rounded-md"
+												data-target="build-cmd"
+											>
+												Copy
+											</button>
+										</div>
+										<p class="mt-3 text-sm text-gray-500">
+											This creates `svg_thumbnail.dll`
+											inside the
+											`target/x86_64-pc-windows-msvc/release/`
+											directory.
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Step 2: Register -->
+						<div class="step-card p-6 rounded-lg shadow-sm">
+							<div class="flex items-start">
+								<div
+									class="step-number flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
+								>
+									2
+								</div>
+								<div class="ml-5 flex-1">
+									<h3
+										class="text-xl font-semibold text-gray-800"
+									>
+										Register the DLL
+									</h3>
+									<p class="mt-2 text-gray-600">
+										You must register the DLL as a COM
+										server. Open a new **Command Prompt or
+										Windows Terminal with Administrator
+										privileges** to proceed.
+									</p>
+
+									<p class="mt-4 font-medium text-gray-700">
+										First, navigate to the output directory:
+									</p>
+									<div class="mt-2">
+										<div
+											class="command-block p-4 rounded-md flex items-center justify-between"
+										>
+											<pre><code id="cd-cmd">cd target\x86_64-pc-windows-msvc\release</code></pre>
+											<button
+												class="copy-btn ml-4 px-3 py-1 text-sm font-medium rounded-md"
+												data-target="cd-cmd"
+											>
+												Copy
+											</button>
+										</div>
+									</div>
+
+									<p class="mt-4 font-medium text-gray-700">
+										Next, use the `regsvr32` utility to
+										register it:
+									</p>
+									<div class="mt-2">
+										<div
+											class="command-block p-4 rounded-md flex items-center justify-between"
+										>
+											<pre><code id="reg-cmd">regsvr32.exe svg_thumbnail.dll</code></pre>
+											<button
+												class="copy-btn ml-4 px-3 py-1 text-sm font-medium rounded-md"
+												data-target="reg-cmd"
+											>
+												Copy
+											</button>
+										</div>
+										<p class="mt-3 text-sm text-gray-500">
+											A dialog box should appear
+											confirming successful registration.
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Step 3: Restart Explorer -->
+						<div class="step-card p-6 rounded-lg shadow-sm">
+							<div class="flex items-start">
+								<div
+									class="step-number flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
+								>
+									3
+								</div>
+								<div class="ml-5 flex-1">
+									<h3
+										class="text-xl font-semibold text-gray-800"
+									>
+										Restart File Explorer
+									</h3>
+									<p class="mt-2 text-gray-600">
+										For the changes to take effect, the
+										Windows Explorer process must be
+										restarted.
+									</p>
+									<ol
+										class="mt-4 list-decimal list-inside space-y-2 text-gray-600"
+									>
+										<li>
+											Press
+											<kbd
+												class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg"
+												>Ctrl</kbd
+											>
+											+
+											<kbd
+												class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg"
+												>Shift</kbd
+											>
+											+
+											<kbd
+												class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg"
+												>Esc</kbd
+											>
+											to open Task Manager.
+										</li>
+										<li>
+											Go to the
+											<strong>"Details"</strong> tab and
+											find `explorer.exe`.
+										</li>
+										<li>
+											Right-click on `explorer.exe` and
+											select <strong>"End task"</strong>.
+										</li>
+										<li>
+											In Task Manager, go to
+											<strong>File → Run new task</strong
+											>. Type `explorer.exe` and click OK.
+										</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Verification -->
+				<section id="verification">
+					<h2
+						class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3"
+					>
+						3. Verification
+					</h2>
+					<div
+						class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg"
+					>
+						<div class="flex">
+							<div class="flex-shrink-0">
+								<svg
+									class="h-6 w-6 text-green-500"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
+								</svg>
+							</div>
+							<div class="ml-4">
+								<h3 class="text-lg font-medium text-green-800">
+									All Done!
+								</h3>
+								<p class="mt-2 text-md text-green-700">
+									Open a folder containing `.svg` files in
+									File Explorer. You should now see image
+									previews instead of generic icons. You may
+									need to change the view to "Medium icons" or
+									larger to see them clearly.
+								</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Uninstall -->
+				<section id="uninstall">
+					<h2
+						class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3"
+					>
+						4. Uninstalling the Provider
+					</h2>
+					<details
+						class="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer"
+					>
+						<summary class="font-semibold text-lg text-gray-700">
+							Click here for uninstallation instructions
+						</summary>
+						<div class="mt-4 pt-4 border-t">
+							<p class="text-gray-600">
+								If you need to remove the thumbnail provider,
+								open an **Administrator** terminal in the same
+								directory where `svg_thumbnail.dll` is located
+								and run the following command.
+							</p>
+							<div class="mt-4">
+								<div
+									class="command-block p-4 rounded-md flex items-center justify-between"
+								>
+									<pre><code id="unreg-cmd">regsvr32.exe /u svg_thumbnail.dll</code></pre>
+									<button
+										class="copy-btn ml-4 px-3 py-1 text-sm font-medium rounded-md"
+										data-target="unreg-cmd"
+									>
+										Copy
+									</button>
+								</div>
+							</div>
+							<p class="mt-4 text-gray-600">
+								After unregistering, restart the File Explorer
+								process as described in Step 3 above to complete
+								the removal.
+							</p>
+						</div>
+					</details>
+				</section>
+			</main>
+
+			<footer class="text-center mt-16 pt-8 border-t border-gray-200">
+				<p class="text-sm text-gray-500">
+					Interactive guide generated from source documentation.
+				</p>
+			</footer>
+		</div>
+
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				const copyButtons = document.querySelectorAll(".copy-btn");
+
+				copyButtons.forEach((button) => {
+					button.addEventListener("click", () => {
+						const targetId = button.dataset.target;
+						const targetElement = document.getElementById(targetId);
+						if (targetElement) {
+							navigator.clipboard
+								.writeText(targetElement.innerText)
+								.then(() => {
+									const originalText = button.innerText;
+									button.innerText = "Copied!";
+									button.classList.add("copied");
+									setTimeout(() => {
+										button.innerText = originalText;
+										button.classList.remove("copied");
+									}, 2000);
+								})
+								.catch((err) => {
+									console.error("Failed to copy text: ", err);
+								});
+						}
+					});
+				});
+			});
+		</script>
+	</body>
+</html>
