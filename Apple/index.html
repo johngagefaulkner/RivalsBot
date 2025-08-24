@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Family iPad Lockdown — Supervision & Profile Guide</title>
+    <!-- Tailwind CSS v4 Play CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      .apple-gradient { background: linear-gradient(180deg, rgb(245 245 247), rgb(232 232 235)); }
+      .card { border:1px solid rgb(228 228 231); border-radius:16px; background:#fff; }
+      .kbd { display:inline-block; padding:.15rem .4rem; border:1px solid rgb(228 228 231); border-radius:.375rem; background:#f4f4f5; font-size:.75rem; font-weight:600; }
+      .toc-link[aria-current="true"]{ color:#000; font-weight:600; }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      /* Print-friendly styling */
+      @media print {
+        header, nav, .no-print { display:none !important; }
+        body { background:white !important; color:black !important; }
+        .card { box-shadow:none !important; border-color:#d4d4d8 !important; }
+        main { grid-template-columns: 1fr !important; }
+        section { break-inside: avoid; page-break-inside: avoid; }
+        h2, h3 { break-after: avoid; }
+        a { color:black; text-decoration: none; }
+        .kbd { border-color:#d4d4d8; background:#f5f5f5; }
+        @page { margin: 14mm; }
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const links = Array.from(document.querySelectorAll('.toc-link'));
+        const sections = links.map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+        const onScroll = () => {
+          let pos = window.scrollY + 120;
+          let cur = sections[0];
+          for (const s of sections) { if (s.offsetTop <= pos) cur = s; }
+          links.forEach(l => l.setAttribute('aria-current', l.getAttribute('href') === '#' + cur.id));
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+      });
+          // Copy + Download handlers for .mobileconfig
+      document.addEventListener('click', (e) => {
+        const copyBtn = e.target.closest('[data-copy]');
+        if (copyBtn) {
+          const src = document.querySelector(copyBtn.getAttribute('data-copy'));
+          if (src) {
+            const text = src.tagName === 'SCRIPT' ? src.textContent.trim() : src.innerText;
+            navigator.clipboard.writeText(text).then(() => { copyBtn.textContent = 'Copied'; setTimeout(()=>copyBtn.textContent='Copy XML', 1200); });
+          }
+        }
+        const dlBtn = e.target.closest('[data-download]');
+        if (dlBtn) {
+          const src = document.querySelector(dlBtn.getAttribute('data-download'));
+          if (src) {
+            const xml = src.textContent.trim();
+            const blob = new Blob([xml], { type: 'application/x-apple-aspen-config; charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Family-Lockdown-Restrictions.mobileconfig';
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+          }
+        }
+      });
+    </script>
+  </head>
+  <body class="min-h-screen text-zinc-900 bg-zinc-50">
+    <!-- Header -->
+    <header class="apple-gradient sticky top-0 z-40 border-b border-zinc-200/80 backdrop-blur">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-3">
+            <div class="size-8 rounded-lg bg-black text-white grid place-items-center font-semibold"></div>
+            <h1 class="text-lg font-semibold tracking-tight">Family iPad Lockdown</h1>
+            <span class="ml-2 text-sm text-zinc-500">Supervision &amp; Profile Guide</span>
+          </div>
+          <div class="text-xs text-zinc-500">Single‑file HTML · Tailwind v4</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 grid lg:grid-cols-[260px_1fr] gap-8">
+      <!-- Sidebar / TOC -->
+      <nav class="hidden lg:block">
+        <div class="card p-4 sticky top-24">
+          <ol class="space-y-2 text-sm">
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#overview">Overview</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#prereqs">Prerequisites</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#level1">Level 1 — Configurator + Screen Time + Activation Lock</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#a-supervise">A — Supervise with Apple Configurator</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#b-profile">B — Install the Lockdown Profile</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#c-activation">C — Activation Lock &amp; Screen Time</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#level2">Level 2 — (Optional) ADE + MDM</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#recovery">Recovery Playbook</a></li>
+            <li><a class="toc-link text-zinc-600 hover:text-black" href="#checklist">Hand‑off Day Checklist</a></li>
+          </ol>
+        </div>
+      </nav>
+
+      <!-- Content -->
+      <section class="space-y-8">
+        <!-- Overview -->
+        <section id="overview" class="card p-6">
+          <h2 class="text-2xl font-semibold tracking-tight">Overview</h2>
+          <p class="mt-3 leading-relaxed">
+            You’re locking down a child’s iPad the way Apple locks down corporate devices. The winning combo is
+            <span class="font-medium">Supervision</span> (via Apple Configurator for Mac) + a <span class="font-medium">non‑removable configuration profile</span>
+            to disable account changes, the in‑Settings erase option, and random host pairing—while enforcing USB Restricted Mode. Then you layer
+            <span class="font-medium">Activation Lock</span> and <span class="font-medium">Screen Time</span> for daily guardrails.
+          </p>
+        </section>
+
+        <!-- Prereqs -->
+        <section id="prereqs" class="card p-6">
+          <h3 class="text-xl font-semibold">Prerequisites</h3>
+          <ul class="mt-3 list-disc pl-6 space-y-1 leading-relaxed">
+            <li>A Mac with the latest <span class="font-medium">Apple Configurator for Mac</span>.</li>
+            <li>Lightning/USB‑C cable for the iPad.</li>
+            <li>Your Apple ID (parent/guardian) and your child’s Apple Account in Family Sharing.</li>
+            <li>Time to erase and set up the device fresh (this is a clean start).</li>
+          </ul>
+        </section>
+
+        <!-- Level 1 -->
+        <section id="level1" class="card p-6">
+          <h3 class="text-xl font-semibold">Level 1 — Supervise with Configurator, then apply Screen Time + Activation Lock</h3>
+          <p class="mt-2">This level blocks the tricks your kid used: signing out, wiping from Settings, or pairing to random computers.</p>
+          <ul class="mt-3 list-disc pl-6 space-y-1 leading-relaxed">
+            <li><span class="font-medium">Supervision</span> unlocks the hard restrictions.</li>
+            <li><span class="font-medium">Restrictions Profile</span> removes the in‑Settings erase path, account changes, and host pairing.</li>
+            <li><span class="font-medium">Activation Lock</span> blocks activation after any restore without your Apple ID.</li>
+            <li><span class="font-medium">Screen Time</span> provides day‑to‑day limits and “Accounts = Don’t Allow.”</li>
+          </ul>
+        </section>
+
+        <!-- A Supervise -->
+        <section id="a-supervise" class="card p-6">
+          <h3 class="text-xl font-semibold">A — Supervise with Apple Configurator</h3>
+          <ol class="mt-3 list-decimal pl-6 space-y-2 leading-relaxed">
+            <li>Connect the iPad to your Mac and launch <span class="font-medium">Apple Configurator</span>.</li>
+            <li>Select the device → click <span class="kbd">Prepare</span> → choose <span class="font-medium">Manual Configuration</span> → check <span class="font-medium">Supervise devices</span>.</li>
+            <li>(Optional) Save these settings as a <span class="font-medium">Blueprint</span> for future reuse.</li>
+            <li>Finish the assistant to erase and supervise the device (clean slate).</li>
+          </ol>
+          <div class="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg border border-zinc-200 p-3 bg-zinc-50">
+              <div class="font-medium">Why Supervision?</div>
+              <p class="mt-1">It unlocks enterprise‑grade restrictions: block erase UI, lock account settings, and restrict computer pairing.</p>
+            </div>
+            <div class="rounded-lg border border-zinc-200 p-3 bg-zinc-50">
+              <div class="font-medium">One‑time step</div>
+              <p class="mt-1">Once supervised, you can keep re‑applying profiles—and Activation Lock will protect against rogue restores.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- B Profile -->
+        $1
+          <!-- Downloadable .mobileconfig & Copyable XML -->
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button class="px-3 py-2 rounded-lg bg-black text-white text-sm" data-download="#mc-xml">Download .mobileconfig</button>
+            <button class="px-3 py-2 rounded-lg border text-sm" data-copy="#mc-xml">Copy XML</button>
+            <button class="px-3 py-2 rounded-lg border text-sm no-print" onclick="window.print()">Print to PDF</button>
+          </div>
+
+          <div class="mt-4 rounded-xl border border-zinc-200 overflow-hidden">
+            <div class="px-4 py-2 text-xs tracking-wide uppercase text-zinc-500 bg-zinc-50">Profile XML (read-only)</div>
+            <pre class="p-4 text-xs bg-zinc-900 text-zinc-50 overflow-x-auto"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+  &lt;key&gt;PayloadDescription&lt;/key&gt;
+  &lt;string&gt;Locks down key settings on a supervised family iPad.&lt;/string&gt;
+  &lt;key&gt;PayloadDisplayName&lt;/key&gt;
+  &lt;string&gt;Family Lockdown (Restrictions)&lt;/string&gt;
+  &lt;key&gt;PayloadIdentifier&lt;/key&gt;
+  &lt;string&gt;com.family.lockdown&lt;/string&gt;
+  &lt;key&gt;PayloadOrganization&lt;/key&gt;
+  &lt;string&gt;Family&lt;/string&gt;
+  &lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+  &lt;true/&gt;
+  &lt;key&gt;PayloadScope&lt;/key&gt;
+  &lt;string&gt;System&lt;/string&gt;
+  &lt;key&gt;PayloadType&lt;/key&gt;
+  &lt;string&gt;Configuration&lt;/string&gt;
+  &lt;key&gt;PayloadUUID&lt;/key&gt;
+  &lt;string&gt;C6B2C7C5-5C7E-4C3E-A3C4-7C6B7A9C1B10&lt;/string&gt;
+  &lt;key&gt;PayloadVersion&lt;/key&gt;
+  &lt;integer&gt;1&lt;/integer&gt;
+
+  &lt;key&gt;PayloadContent&lt;/key&gt;
+  &lt;array&gt;
+    &lt;dict&gt;
+      &lt;key&gt;PayloadDisplayName&lt;/key&gt;
+      &lt;string&gt;Restrictions&lt;/string&gt;
+      &lt;key&gt;PayloadDescription&lt;/key&gt;
+      &lt;string&gt;Restrict account/erase, host pairing, and enforce USB Restricted Mode.&lt;/string&gt;
+      &lt;key&gt;PayloadIdentifier&lt;/key&gt;
+      &lt;string&gt;com.family.lockdown.restrictions&lt;/string&gt;
+      &lt;key&gt;PayloadType&lt;/key&gt;
+      &lt;string&gt;com.apple.applicationaccess&lt;/string&gt;
+      &lt;key&gt;PayloadUUID&lt;/key&gt;
+      &lt;string&gt;A1A2A3A4-1111-2222-3333-444455556666&lt;/string&gt;
+      &lt;key&gt;PayloadVersion&lt;/key&gt;
+      &lt;integer&gt;1&lt;/integer&gt;
+
+      &lt;key&gt;allowAccountModification&lt;/key&gt;&lt;false/&gt;
+      &lt;key&gt;allowEraseContentAndSettings&lt;/key&gt;&lt;false/&gt;
+      &lt;key&gt;allowHostPairing&lt;/key&gt;&lt;false/&gt;
+      &lt;key&gt;allowUSBRestrictedMode&lt;/key&gt;&lt;true/&gt;
+    &lt;/dict&gt;
+  &lt;/array&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+</code></pre>
+          </div>
+
+          <!-- Hidden source for copy/download -->
+          <script type="application/json" id="mc-xml"><?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadDescription</key>
+  <string>Locks down key settings on a supervised family iPad.</string>
+  <key>PayloadDisplayName</key>
+  <string>Family Lockdown (Restrictions)</string>
+  <key>PayloadIdentifier</key>
+  <string>com.family.lockdown</string>
+  <key>PayloadOrganization</key>
+  <string>Family</string>
+  <key>PayloadRemovalDisallowed</key>
+  <true/>
+  <key>PayloadScope</key>
+  <string>System</string>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>C6B2C7C5-5C7E-4C3E-A3C4-7C6B7A9C1B10</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadDisplayName</key>
+      <string>Restrictions</string>
+      <key>PayloadDescription</key>
+      <string>Restrict account/erase, host pairing, and enforce USB Restricted Mode.</string>
+      <key>PayloadIdentifier</key>
+      <string>com.family.lockdown.restrictions</string>
+      <key>PayloadType</key>
+      <string>com.apple.applicationaccess</string>
+      <key>PayloadUUID</key>
+      <string>A1A2A3A4-1111-2222-3333-444455556666</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+
+      <key>allowAccountModification</key><false/>
+      <key>allowEraseContentAndSettings</key><false/>
+      <key>allowHostPairing</key><false/>
+      <key>allowUSBRestrictedMode</key><true/>
+    </dict>
+  </array>
+</dict>
+</plist></script>
+        </section>
+
+        <!-- C Activation + Screen Time -->
+        <section id="c-activation" class="card p-6">
+          <h3 class="text-xl font-semibold">C — Activation Lock &amp; Screen Time</h3>
+          <ol class="mt-3 list-decimal pl-6 space-y-2 leading-relaxed">
+            <li>On first boot, sign in with <strong>your Apple ID</strong> and enable <strong>Find My</strong> to arm Activation Lock.</li>
+            <li>Then sign your child into your Family and their Apple Account on the device.</li>
+            <li>On your iPhone/Mac, open <span class="kbd">Settings → Family → Screen Time → [Child]</span> and set a <strong>Screen Time passcode</strong> known only to you.</li>
+            <li>In <em>Content &amp; Privacy</em>: set <strong>Accounts = Don’t Allow</strong>; consider blocking app install/deletion if you want a fixed app set.</li>
+          </ol>
+          <div class="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
+            <div class="font-medium">Why this matters</div>
+            <p class="mt-1">If anyone tries a DFU/restore on a computer, Activation Lock blocks setup without your Apple ID. The profile already removed the in‑Settings erase path.</p>
+          </div>
+        </section>
+
+        <!-- Level 2 -->
+        <section id="level2" class="card p-6">
+          <h3 class="text-xl font-semibold">Level 2 — Optional: Automated Device Enrollment (ABM/ASM) + an MDM</h3>
+          <p class="mt-2 leading-relaxed">
+            Want “it always re‑locks itself after any erase”? Add the iPad to Apple Business/School Manager and assign it to a lightweight MDM (e.g., Jamf Now).
+            After any wipe, during Setup Assistant the device auto‑enrolls, re‑pulls your profile, and supervision is mandatory.
+          </p>
+          <ul class="mt-3 list-disc pl-6 space-y-1 leading-relaxed text-sm">
+            <li>Devices added to ABM via Configurator have a <strong>30‑day provisional window</strong> where a user can leave management; after that, they can’t.</li>
+            <li>Buying the device directly into your ABM from Apple/resellers skips that 30‑day out entirely.</li>
+          </ul>
+        </section>
+
+        <!-- Recovery -->
+        <section id="recovery" class="card p-6">
+          <h3 class="text-xl font-semibold">Recovery Playbook</h3>
+          <ul class="mt-3 list-disc pl-6 space-y-2 leading-relaxed">
+            <li><strong>In‑Settings erase attempt:</strong> The menu path is gone; nothing to do.</li>
+            <li><strong>DFU/restore on a computer:</strong> Activation Lock appears. Enter your Apple ID to unlock.</li>
+            <li><strong>Using ADE/MDM:</strong> After any erase, the device auto‑re‑enrolls and re‑applies your restrictions.</li>
+          </ul>
+          <p class="mt-3 text-sm text-zinc-600">Keep your Mac admin creds and Configurator access private; that’s the only realistic way to remove Supervision.</p>
+        </section>
+
+        <!-- Checklist -->
+        <section id="checklist" class="card p-6">
+          <h3 class="text-xl font-semibold">Hand‑off Day Checklist</h3>
+          <ul class="mt-3 list-disc pl-6 space-y-1 leading-relaxed">
+            <li>Settings shows <strong>“This iPad is supervised.”</strong></li>
+            <li>Lockdown profile installed and marked <strong>non‑removable</strong>.</li>
+            <li>Screen Time passcode set; <strong>Accounts = Don’t Allow</strong>.</li>
+            <li><strong>Find My</strong> enabled under your Apple ID → <strong>Activation Lock</strong> is armed.</li>
+            <li><strong>USB Restricted Mode</strong> enforced (no accessories while locked).</li>
+          </ul>
+        </section>
+      </section>
+    </main>
+
+    <footer class="my-10 text-center text-xs text-zinc-500">
+      Made with Tailwind v4. This guide is a convenience resource for personal device management.
+    </footer>
+  </body>
+</html>
